@@ -66,7 +66,7 @@ public class RoundLayout extends FrameLayout {
 			final View child = getChildAt(i);
 			if (c == child) {
 				mScrollX %= mC;
-				float targetScrollX = child.getLeft() - mR;
+				float targetScrollX = child.getLeft() + child.getMeasuredWidth() / 2f - mR;
 
 				double[] deltaX = {
 						targetScrollX - mScrollX,
@@ -167,11 +167,11 @@ public class RoundLayout extends FrameLayout {
 				// scale for perspective
 				int width = v.getMeasuredWidth();
 				float scale = (float) (1 - ((z / (2 * mR)) * mScale));
-				x = mR - (mR - x - width / 2f) * scale;
+				x = mR - (mR - x) * scale;
 				y = y * scale + y / 2.0;
 
 				// change view display for perspective
-				v.setTranslationX(mScrollX - v.getLeft() + mOffsetX + (float) x - width);
+				v.setTranslationX(mScrollX - v.getLeft() + mOffsetX + (float) x - width/2f);
 				v.setTranslationY((float) y + mOffsetY);
 				v.setScaleX(scale);
 				v.setScaleY(scale);
@@ -208,7 +208,7 @@ public class RoundLayout extends FrameLayout {
 
 	protected double[] getViewCoordinates(View view, double c, double r) {
 		double[] coordinates = { 0, 0, 0, 0 };
-		double l = mScrollX + r - view.getLeft(); // length of arc
+		double l = mScrollX + r - view.getLeft() - (view.getMeasuredWidth()/2f); // length of arc
 		double a = getArcAngle(c, l); // angle
 		double v = (l >= 0) ? 1 : -1; // vector direction
 
