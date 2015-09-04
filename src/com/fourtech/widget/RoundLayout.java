@@ -1,5 +1,10 @@
 package com.fourtech.widget;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -17,6 +22,7 @@ public class RoundLayout extends FrameLayout {
 	protected double mScale; // to cooperate viewport
 	protected float mOffsetX, mOffsetY;
 	protected float mCellWidth; // width of each child view
+	private static final int TAG_COORS = 0x444 << 24;
 
 	public RoundLayout(Context context) {
 		this(context, null);
@@ -60,15 +66,26 @@ public class RoundLayout extends FrameLayout {
 			final View child = getChildAt(i);
 			if (c == child) {
 				mScrollX %= mC;
-				float childLeft = i * mCellWidth;
-				float targetScrollX = childLeft - mR + child.getMeasuredWidth()/2f;
-				float deltaX1 = targetScrollX - mScrollX;
-				float deltaX2 = (float) mC - targetScrollX + mScrollX;
-				if (Math.abs(deltaX1) < Math.abs(deltaX2)) {
-					doScrollByForSnapToChild((int) deltaX1, 0);
-				} else {
-					doScrollByForSnapToChild((int) deltaX2, 0);
+				float targetScrollX = child.getLeft() - mR;
+
+				double[] deltaX = {
+						targetScrollX - mScrollX,
+						targetScrollX - mC - mScrollX,
+						targetScrollX + mC - mScrollX
+				};
+
+				double temp = 0;
+				for (int j = deltaX.length - 1; j > 0; --j) {
+					for (int k = 0; k < j; ++k) {
+						if (Math.abs(deltaX[k + 1]) < Math.abs(deltaX[k])) {
+							temp = deltaX[k];
+							deltaX[k] = deltaX[k + 1];
+							deltaX[k + 1] = temp;
+						}
+					}
 				}
+
+				doScrollByForSnapToChild((int) deltaX[0], 0);
 				break;
 			}
 		}
@@ -100,8 +117,8 @@ public class RoundLayout extends FrameLayout {
 				final int width = child.getMeasuredWidth();
 				final int height = child.getMeasuredHeight();
 
-				childLeft = (int) (i * cellWidth + (cellWidth - width) / 2);
-				childTop = (int) ((H - height) / 2);
+				childLeft = (int) (i * cellWidth + (cellWidth - width) / 2.0);
+				childTop = (int) ((H - height) / 2.0);
 				child.layout(childLeft, childTop, childLeft + width, childTop + height);
 			}
 		}
@@ -119,13 +136,21 @@ public class RoundLayout extends FrameLayout {
 			final long drawingTime = getDrawingTime();
 
 			canvas.save();
-			// FIXME: A child contain a smaller z should draw first
-			for (int i = 0; i < cc; i++) {
-				final View child = getChildAt(i);
-				if (child.getVisibility() == VISIBLE) {
-					drawChild(canvas, child, drawingTime);
+			List<View> vs = new ArrayList<View>();
+			for (int i = 0, c = cc; i < c; i++) {
+				final View v = getChildAt(i);
+				if (v.getVisibility() != GONE) {
+					vs.add(v);
 				}
 			}
+
+			Collections.sort(vs, mComparator);
+
+			// Draw smaller z coordinate view first
+			for (int i = 0; i < vs.size(); i++) {
+				drawChild(canvas, vs.get(i), drawingTime);
+			}
+
 			canvas.restore();
 		}
 	}
@@ -137,14 +162,16 @@ public class RoundLayout extends FrameLayout {
 			if (v != null) {
 				double[] coors = getViewCoordinates(v, mC, mR);
 				double x = coors[0], y = coors[1], z = coors[2];
+				v.setTag(TAG_COORS, coors);
 
 				// scale for perspective
-				float scale = 1 - (float) ((z / (2 * mR)) * mScale);
-				x = mR + (mR - x - v.getMeasuredWidth()/2) * scale;
-				y = y * scale + y / 2;
+				int width = v.getMeasuredWidth();
+				float scale = (float) (1 - ((z / (2 * mR)) * mScale));
+				x = mR - (mR - x - width / 2f) * scale;
+				y = y * scale + y / 2.0;
 
 				// change view display for perspective
-				v.setTranslationX(mScrollX - v.getLeft() + (float) x + mOffsetX);
+				v.setTranslationX(mScrollX - v.getLeft() + mOffsetX + (float) x - width);
 				v.setTranslationY((float) y + mOffsetY);
 				v.setScaleX(scale);
 				v.setScaleY(scale);
@@ -152,6 +179,17 @@ public class RoundLayout extends FrameLayout {
 			}
 		}
 	}
+
+	private Comparator<View> mComparator = new Comparator<View>() {
+		@Override
+		public int compare(View v0, View v1) {
+			final double z0 = ((double[]) v0.getTag(TAG_COORS))[2];
+			final double z1 = ((double[]) v1.getTag(TAG_COORS))[2];
+			if (z1 > z0) return 1;
+			if (z1 < z0) return -1;
+			return 0;
+		}
+	};
 
 	/** get radian by angle **/
 	protected double toRadian(double angle) {
@@ -170,7 +208,7 @@ public class RoundLayout extends FrameLayout {
 
 	protected double[] getViewCoordinates(View view, double c, double r) {
 		double[] coordinates = { 0, 0, 0, 0 };
-		double l = view.getLeft() - mScrollX - r; // length of arc
+		double l = mScrollX + r - view.getLeft(); // length of arc
 		double a = getArcAngle(c, l); // angle
 		double v = (l >= 0) ? 1 : -1; // vector direction
 

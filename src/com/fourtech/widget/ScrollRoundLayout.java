@@ -11,7 +11,7 @@ import android.widget.Scroller;
 
 public class ScrollRoundLayout extends RoundLayout {
 
-	protected static final int MIN_LENGTH_FOR_FLING = 25;
+	protected static final int MIN_LENGTH_FOR_FLING = 6;
 	protected static final int FLING_THRESHOLD_VELOCITY = 500;
 
 	protected final int TOUCH_STATE_REST = 0;
@@ -28,7 +28,7 @@ public class ScrollRoundLayout extends RoundLayout {
 	protected Scroller mScroller;
 	protected int mMixScrollDuration = 60;
 	protected int mMaxScrollDuration = 600;
-	protected float mAcceleration = 0.08f;
+	protected float mAcceleration = 0.004f;
 
 	protected static final int INVALID_POINTER = -1;
 	protected int mActivePointerId = INVALID_POINTER;
@@ -143,8 +143,7 @@ public class ScrollRoundLayout extends RoundLayout {
 		case MotionEvent.ACTION_MOVE:
 			if (mTouchState == TOUCH_STATE_SCROLLING_X) {
 				// Scroll to follow the motion event
-				final int pointerIndex = event.findPointerIndex(mActivePointerId);
-				final float x = event.getX(pointerIndex);
+				final float x = event.getX();
 				final float deltaX = x - (mLastMotionX + mLastMotionXRemainder);
 
 				// move when deltaY >= 1db, or move next time
@@ -162,15 +161,13 @@ public class ScrollRoundLayout extends RoundLayout {
 		case MotionEvent.ACTION_UP:
 		case MotionEvent.ACTION_CANCEL:
 			if (mTouchState == TOUCH_STATE_SCROLLING_X) {
-				final int activePointerId = mActivePointerId;
-				final int pointerIndex = event.findPointerIndex(activePointerId);
-				final float x = event.getX(pointerIndex);
+				final float x = event.getX();
 				final VelocityTracker velocityTracker = mVelocityTracker;
 				velocityTracker.computeCurrentVelocity(1000, mMaximumFlingVelocity);
-				float velocityX = velocityTracker.getXVelocity(activePointerId);
-				final float totalDeltaY = (x - mDownMotionX);
+				float velocityX = velocityTracker.getXVelocity();
+				final float totalDeltaX = (x - mDownMotionX);
 
-				boolean isFling = Math.abs(totalDeltaY)>MIN_LENGTH_FOR_FLING && Math.abs(velocityX)>mMinimumFlingVelocity;
+				boolean isFling = Math.abs(totalDeltaX)>MIN_LENGTH_FOR_FLING && Math.abs(velocityX)>mMinimumFlingVelocity;
 
 				// start fling
 				if (isFling) {
@@ -187,7 +184,7 @@ public class ScrollRoundLayout extends RoundLayout {
 			break;
 		}
 
-		return (mTouchState == TOUCH_STATE_REST);
+		return true/*(mTouchState == TOUCH_STATE_REST)*/;
 	}
 
 	protected void startScroll(float velocityX) {
@@ -200,6 +197,7 @@ public class ScrollRoundLayout extends RoundLayout {
 		duration = Math.min(Math.max(duration, mMixScrollDuration), mMaxScrollDuration); // ((velocityX / 1000) / 2)
 		int deltaX = (int) (velocityX > 0 ? distance : -distance);
 		mScroller.startScroll(mScrollX, 0, deltaX, 0, duration);
+		invalidate();
 	}
 
 	@Override

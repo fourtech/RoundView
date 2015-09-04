@@ -2,54 +2,6 @@
 
     <Button
         style="@style/ButtonStyle"
-        android:text="F0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="E0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="D0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="C0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="B0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="A0" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="90" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="80" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="70" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="60" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="50" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="40" />
-
-    <Button
-        style="@style/ButtonStyle"
         android:text="30" />
 
     <Button
@@ -77,53 +29,5 @@
     <Button
         style="@style/ButtonStyle"
         android:text="03" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="04" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="05" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="06" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="07" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="08" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="09" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0A" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0B" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0C" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0D" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0E" />
-
-    <Button
-        style="@style/ButtonStyle"
-        android:text="0F" />
 
 </merge>

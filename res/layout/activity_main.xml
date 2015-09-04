@@ -36,6 +36,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:visibility="gone"
+        round:viewAngle="6"
         round:radius="360dp" >
 
         <include layout="@layout/round_items_common" />
@@ -49,6 +50,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:visibility="gone"
+        round:viewAngle="4"
         round:radius="360dp" >
 
         <include layout="@layout/round_items_common" />
