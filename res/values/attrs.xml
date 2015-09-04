@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- RoundLayout specific attributes. -->
+    <declare-styleable name="RoundLayout">
+
+        <!-- Define the radius of the round to layout child views. -->
+        <attr name="radius" format="dimension" />
+        <!-- Define the angle of viewport -->
+        <attr name="viewAngle" format="integer" />
+        <!-- Define the distance from viewport to display objects -->
+        <attr name="viewPointZ" format="dimension" />
+    </declare-styleable>
+
+</resources>
