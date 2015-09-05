@@ -191,6 +191,7 @@ public class ScrollRoundLayout extends RoundLayout {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
 		}
+		adjustScroll();
 		// velocityX /= 1000; // dip per millisecond
 		float distance = velocityX * velocityX / (2000000 * mAcceleration); // 2 * 1000 * 1000 * mAcceleration
 		int duration = (int) Math.abs(2000 * distance / velocityX); // 2 * distance / (velocityX / 1000)

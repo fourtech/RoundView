@@ -65,8 +65,8 @@ public class RoundLayout extends FrameLayout {
 		for (int i = 0; i < count; i++) {
 			final View child = getChildAt(i);
 			if (c == child) {
-				mScrollX %= mC;
-				float targetScrollX = child.getLeft() + child.getMeasuredWidth() / 2f - mR;
+				adjustScroll();
+				float targetScrollX = child.getLeft() + child.getMeasuredWidth()/2f - mR;
 
 				double[] deltaX = {
 						targetScrollX - mScrollX,
@@ -77,10 +77,10 @@ public class RoundLayout extends FrameLayout {
 				double temp = 0;
 				for (int j = deltaX.length - 1; j > 0; --j) {
 					for (int k = 0; k < j; ++k) {
-						if (Math.abs(deltaX[k + 1]) < Math.abs(deltaX[k])) {
+						if (Math.abs(deltaX[k+1]) < Math.abs(deltaX[k])) {
 							temp = deltaX[k];
-							deltaX[k] = deltaX[k + 1];
-							deltaX[k + 1] = temp;
+							deltaX[k] = deltaX[k+1];
+							deltaX[k+1] = temp;
 						}
 					}
 				}
@@ -88,6 +88,15 @@ public class RoundLayout extends FrameLayout {
 				doScrollByForSnapToChild((int) deltaX[0], 0);
 				break;
 			}
+		}
+	}
+
+	protected void adjustScroll() {
+		if (mScrollX >= 0) {
+			mScrollX %= mC;
+		} else {
+			double sx = (-mScrollX) % mC;
+			mScrollX = (int) (mC - sx);
 		}
 	}
 
