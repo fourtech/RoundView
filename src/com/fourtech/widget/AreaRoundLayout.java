@@ -7,6 +7,7 @@ public class AreaRoundLayout extends ScrollRoundLayout {
 
 	protected double mAngleScale;
 	protected double mUnreachableAngle;
+	protected double mCoefficient = 0.4;
 
 	public AreaRoundLayout(Context context) {
 		this(context, null);
@@ -19,7 +20,7 @@ public class AreaRoundLayout extends ScrollRoundLayout {
 	public AreaRoundLayout(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 
-		mUnreachableAngle = 45;
+		mUnreachableAngle = 60;
 		mAngleScale = (180 - mUnreachableAngle) / 180;
 	}
 
@@ -27,9 +28,11 @@ public class AreaRoundLayout extends ScrollRoundLayout {
 	protected double getArcAngle(double c, double l) {
 		final double a = super.getArcAngle(c, l);
 		if (a <= 180) {
-			return a * mAngleScale;
+			double ac = a * (180 - a) / 180.0 * mCoefficient;
+			return (a - ac) * mAngleScale;
 		} else {
-			return 180 + mUnreachableAngle + (a - 180) * mAngleScale;
+			double ac = (a - 180) * (360 - a) / 180.0 * mCoefficient;
+			return 180 + mUnreachableAngle + (a + ac - 180) * mAngleScale;
 		}
 	}
 }
