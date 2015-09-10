@@ -35,4 +35,11 @@ public class AreaRoundLayout extends ScrollRoundLayout {
 			return 180 + mUnreachableAngle + (a + ac - 180) * mAngleScale;
 		}
 	}
+
+	@Override
+	protected float computeDeltaX(float x, float lastX, float remainder) {
+		return 2 * super.computeDeltaX(x, lastX, remainder);
+		/* return (1.0f + (float) mCoefficient + (float) mAngleScale) * super.computeDeltaX(x, lastX, remainder) */
+	}
+
 }

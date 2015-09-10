@@ -1,7 +1,8 @@
 package com.fourtech.widget;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -9,7 +10,9 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 public class RoundLayout extends FrameLayout {
@@ -22,7 +25,10 @@ public class RoundLayout extends FrameLayout {
 	protected double mScale; // to cooperate viewport
 	protected float mOffsetX, mOffsetY;
 	protected float mCellWidth; // width of each child view
+
+	private Field mChildrenField;
 	private static final int TAG_COORS = 0x444 << 24;
+	private static final int TAG_INDEX = 0x445 << 24;
 
 	public RoundLayout(Context context) {
 		this(context, null);
@@ -34,6 +40,14 @@ public class RoundLayout extends FrameLayout {
 
 	public RoundLayout(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
+
+		try {
+			mChildrenField = ViewGroup.class.getDeclaredField("mChildren");
+			mChildrenField.setAccessible(true);
+		} catch (Throwable t) {
+			mChildrenField = null;
+		}
+
 		TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.RoundLayout, defStyle, 0);
 
 		mR = a.getDimensionPixelSize(R.styleable.RoundLayout_radius, -1);
@@ -126,8 +140,17 @@ public class RoundLayout extends FrameLayout {
 				final int width = child.getMeasuredWidth();
 				final int height = child.getMeasuredHeight();
 
-				childLeft = (int) (i * cellWidth + (cellWidth - width) / 2.0);
-				childTop = (int) ((H - height) / 2.0);
+				int index;
+				Object obj = child.getTag(TAG_INDEX);
+				if (obj == null) {
+					index = i;
+					child.setTag(TAG_INDEX, i);
+				} else {
+					index = (Integer) obj;
+				}
+
+				childLeft = (int) (index * cellWidth + (cellWidth - width) / 2f);
+				childTop = (int) ((H - height) / 2f);
 				child.layout(childLeft, childTop, childLeft + width, childTop + height);
 			}
 		}
@@ -137,11 +160,18 @@ public class RoundLayout extends FrameLayout {
 	}
 
 	@Override
+	public boolean dispatchTouchEvent(MotionEvent event) {
+		sortChildren();
+		return super.dispatchTouchEvent(event);
+	}
+
+	@Override
 	protected void dispatchDraw(Canvas canvas) {
 		processRoundLayout(); // changed display
 
 		final int cc = getChildCount();
 		if (cc > 0) {
+			sortChildren();
 			final long drawingTime = getDrawingTime();
 
 			canvas.save();
@@ -150,17 +180,18 @@ public class RoundLayout extends FrameLayout {
 				final View v = getChildAt(i);
 				if (v.getVisibility() != GONE) {
 					vs.add(v);
+					drawChild(canvas, v, drawingTime);
 				}
 			}
-
-			Collections.sort(vs, mComparator);
-
-			// Draw smaller z coordinate view first
-			for (int i = 0; i < vs.size(); i++) {
-				drawChild(canvas, vs.get(i), drawingTime);
-			}
-
 			canvas.restore();
+		}
+	}
+
+	private void sortChildren() {
+		try {
+			View[] children = (View[]) mChildrenField.get(this);
+			Arrays.sort(children, mComparator);
+		} catch (Throwable t) {
 		}
 	}
 

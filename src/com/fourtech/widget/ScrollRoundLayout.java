@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
-import android.view.animation.Interpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Scroller;
 
 public class ScrollRoundLayout extends RoundLayout {
@@ -26,23 +26,14 @@ public class ScrollRoundLayout extends RoundLayout {
 	protected int mMinimumFlingVelocity;
 
 	protected Scroller mScroller;
+	protected int mSnapDuration = 600;
 	protected int mMixScrollDuration = 60;
-	protected int mMaxScrollDuration = 600;
-	protected float mAcceleration = 0.004f;
+	protected int mMaxScrollDuration = 3600;
+	protected float mAcceleration = 0.003f;
 
 	protected static final int INVALID_POINTER = -1;
 	protected int mActivePointerId = INVALID_POINTER;
 	protected VelocityTracker mVelocityTracker;
-
-	protected static class ScrollInterpolator implements Interpolator {
-		public ScrollInterpolator() {
-		}
-
-		public float getInterpolation(float t) {
-			t -= 1.0f;
-			return t * t * t * t * t + 1;
-		}
-	}
 
 	public ScrollRoundLayout(Context context) {
 		this(context, null);
@@ -60,7 +51,7 @@ public class ScrollRoundLayout extends RoundLayout {
 		mMaximumFlingVelocity = config.getScaledMaximumFlingVelocity();
 		mMinimumFlingVelocity = config.getScaledMinimumFlingVelocity();
 
-		mScroller = new Scroller(context, new ScrollInterpolator());
+		mScroller = new Scroller(context, new DecelerateInterpolator(1.2f));
 	}
 
 	@Override
@@ -144,7 +135,7 @@ public class ScrollRoundLayout extends RoundLayout {
 			if (mTouchState == TOUCH_STATE_SCROLLING_X) {
 				// Scroll to follow the motion event
 				final float x = event.getX();
-				final float deltaX = x - (mLastMotionX + mLastMotionXRemainder);
+				final float deltaX = computeDeltaX(x, mLastMotionX, mLastMotionXRemainder);
 
 				// move when deltaY >= 1db, or move next time
 				if (Math.abs(deltaX) >= 1.0f) {
@@ -172,6 +163,17 @@ public class ScrollRoundLayout extends RoundLayout {
 				// start fling
 				if (isFling) {
 					startScroll(velocityX);
+				} else {
+					float targetScrollX1 = (int) (mScrollX/mCellWidth) * mCellWidth + mCellWidth/2f - mR%mCellWidth;
+					float targetScrollX2 = (int) (mScrollX/mCellWidth) * mCellWidth - mCellWidth/2f - mR%mCellWidth;
+					int deltaX1 = (int) (targetScrollX1 - mScrollX);
+					int deltaX2 = (int) (targetScrollX2 - mScrollX);
+					if (Math.abs(deltaX1) <= Math.abs(deltaX2)) {
+						mScroller.startScroll(mScrollX, 0, deltaX1, 0, 90);
+					} else {
+						mScroller.startScroll(mScrollX, 0, deltaX2, 0, 90);
+					}
+					invalidate();
 				}
 			}
 			mTouchState = TOUCH_STATE_REST;
@@ -196,7 +198,15 @@ public class ScrollRoundLayout extends RoundLayout {
 		float distance = velocityX * velocityX / (2000000 * mAcceleration); // 2 * 1000 * 1000 * mAcceleration
 		int duration = (int) Math.abs(2000 * distance / velocityX); // 2 * distance / (velocityX / 1000)
 		duration = Math.min(Math.max(duration, mMixScrollDuration), mMaxScrollDuration); // ((velocityX / 1000) / 2)
-		int deltaX = (int) (velocityX > 0 ? distance : -distance);
+
+		float targetScrollX;
+		if (velocityX > 0) {
+			targetScrollX = (int) (((mScrollX + distance) / mCellWidth)) * mCellWidth + mCellWidth/2f - mR%mCellWidth;
+		} else {
+			targetScrollX = (int) (((mScrollX - distance) / mCellWidth)) * mCellWidth - mCellWidth/2f - mR%mCellWidth;
+		}
+
+		int deltaX = (int) (targetScrollX - mScrollX);
 		mScroller.startScroll(mScrollX, 0, deltaX, 0, duration);
 		invalidate();
 	}
@@ -209,13 +219,17 @@ public class ScrollRoundLayout extends RoundLayout {
 		}
 	}
 
+	protected float computeDeltaX(float x, float lastX, float remainder) {
+		return x - (lastX + remainder);
+	}
+
 	@Override
 	protected void doScrollByForSnapToChild(int x, int y) {
 		if (!mScroller.isFinished()) {
 			mScroller.abortAnimation();
 		}
 
-		mScroller.startScroll(mScrollX, 0, x, 0, mMaxScrollDuration);
+		mScroller.startScroll(mScrollX, 0, x, 0, mSnapDuration);
 		invalidate();
 	}
 
